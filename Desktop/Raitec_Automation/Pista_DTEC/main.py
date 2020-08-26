@@ -14,10 +14,12 @@ ________________________________________________________________________________
 """
 import tkinter as tk
 from tkinter import scrolledtext as sc
+import tkinter.font as tkFont
 import pandas as pd
 
 class Configurar:
     def __init__ (self, master):
+        #fontStyle = tkFont.Font(family="Lucida Grande", size=20)
         self.master = master
         self.checks = tk.StringVar()
         self.eqps = []
@@ -32,7 +34,9 @@ class Configurar:
         self.app.framesTable()
         a, b = int(self.checks.get()), self.eqps
         self.app.criarDF(a, b)
-        self.app.estruturaTabela(a, b)
+        self.app.fila(b)
+        c, d = self.app.criarDF(a, b, col = True), self.app.criarDF(a, b, lin = True)
+        self.app.estruturaTabela(c, d)
         self.app.gradeTable()
     def tela(self):
         # Método que reúne todos os outros da classe Configurar 
@@ -109,6 +113,8 @@ class Configurar:
 
 class Tabela(Configurar):
     def __init__(self, master):
+        self.fontStyle = tkFont.Font(family="Lucida Grande", size=15)
+        self.fontCLASS = tkFont.Font(family="Lucida Grande", size=30)
         self.master = master
         super().__init__(master)
     def tela(self):
@@ -119,7 +125,7 @@ class Tabela(Configurar):
         #self.registrarTempo()
         #self.comparaTempo()
         #self.mudarOrdem()
-    def criarDF(self, a = 0, b = 0):
+    def criarDF(self, a = 0, b = 0, col = False, lin = False):
         """
         Cria um dataframe com a biblioteca pandas
         """
@@ -128,31 +134,40 @@ class Tabela(Configurar):
         for i in range(1, self.a+1):
             COLUNAS.append('CHECK%d'%i)
         COLUNAS.append('FINAL')
-        df = pd.DataFrame(columns = COLUNAS, index = b)
-        print(df)
-    def estruturaTabela(self, a, b):
+        self.df = pd.DataFrame(columns = COLUNAS, index = b)
+        if col == True:
+            return COLUNAS
+        if lin == True:
+            return b
+        return self.df
+        print(self.df)
+    def estruturaTabela(self, c, d):
         """
         Método responsável por montar a estrutura da tabela baseado no número de competidores registrados
         e número de checkpoints dispostos na pista
         """
-        self.txtClass = tk.Label (self.frameTema, text = "CLASSIFICAÇÃO", bg = "dark orange")
+        self.txtClass = tk.Label (
+            self.frameTema,
+            text = "CLASSIFICAÇÃO",
+            bg = "dark orange",
+            font = self.fontCLASS)
         self.txtClass.grid(row = 0, sticky = "nsew")
-        for i in range(1, a+1):
+        for i, j in zip(range(1, len(c)+1), c):
             """
             Laço que cria a linha das colunas 
             """
             self.frameTsub = tk.Frame(self.frameTema2, relief = tk.RAISED, borderwidth = 1)
             self.frameTsub.grid(row = 0, column = i)
-            self.txtCheck = tk.Label (self.frameTsub, text = i, bg = "orange")
+            self.txtCheck = tk.Label (self.frameTsub, text = j, bg = "orange", font=self.fontStyle)
             self.txtCheck.grid(row = 0, column = i)
-        for i, j in zip(b, range(len(b))):
+        for i, j in zip(d, range(len(d))):
             """
             Laço que cria a coluna das linhas 
             """
             self.frameOrd = tk.Frame(self.frameCorpo, relief = tk.RAISED, borderwidth = 1)
-            self.frameOrd.grid(row = j, column = 0)
-            self.tx = tk.Label (self.frameOrd, text = i, bg = "pink")
-            self.tx.grid(row = j, column = 0)      
+            self.frameOrd.grid(row = j, column = 0, sticky = "nsew")
+            self.tx = tk.Label (self.frameOrd, text = i, bg = "pink", font=self.fontStyle)
+            self.tx.grid(row = j, column = 0, sticky = "nsew")      
 ##    def criarTabela(self):
 ##        pass
 ##        """
@@ -198,9 +213,12 @@ class Tabela(Configurar):
         self.frameCorpo.grid(row = 2)
         self.frameValor.grid(row = 0, column = 1)
         self.frameFila.grid()
-        self.fila = tk.Label(self.frame2, text = "Fila").grid(row=0)
-    def fila (self):
-        pass
+    def fila (self, a):
+        for i, j in zip(a, range(len(a))):
+            self.frameF = tk.Frame(self.frameFila, relief = tk.RAISED, borderwidth = 1)
+            self.fila = tk.Label(self.frameF, text = i, font=self.fontStyle)
+            self.frameF.grid(sticky = "nsew")
+            self.fila.grid(row = j)
         """
         Aqui haverá uma coluna cujas linhas apresentam, na ordem exibida, o nome do competidor atual, seguido
         pelo nome das próximas equipes a competir, tal qual uma fila.
