@@ -24,20 +24,23 @@ class Configurar:
         self.checks = tk.StringVar()
         self.eqps = []
         self.tela()
+        self.clique = 0
     def iniciaTabela(self):
         """
         IMPLEMENTAR: colocar uma MessageBox caso inicie a tabela com informação faltante ou se um dos valores
         numéricos não correspondam a números inteiros
         """
-        self.tabela = tk.Toplevel(self.master)
-        self.app = Tabela(self.tabela)
-        self.app.framesTable()
-        a, b = int(self.checks.get()), self.eqps
-        self.app.criarDF(a, b)
-        self.app.fila(b)
-        c, d = self.app.criarDF(a, b, col = True), self.app.criarDF(a, b, lin = True)
-        self.app.estruturaTabela(c, d)
-        self.app.gradeTable()
+        if self.clique == 0:
+            self.tabela = tk.Toplevel(self.master)
+            self.app = Tabela(self.tabela)
+            self.app.framesTable()
+            a, b = int(self.checks.get()), self.eqps
+            dfr = self.app.criarDF(a, b)
+            self.app.fila(b)
+            c, d = self.app.criarDF(a, b, col = True), self.app.criarDF(a, b, lin = True)
+            self.app.estruturaTabela(dfr, c, d, 45)
+            self.app.gradeTable()
+            self.clique = 1
     def tela(self):
         # Método que reúne todos os outros da classe Configurar 
         self.frames_tela()
@@ -117,6 +120,7 @@ class Tabela(Configurar):
         self.fontCLASS = tkFont.Font(family="Lucida Grande", size=30)
         self.master = master
         super().__init__(master)
+        
     def tela(self):
         self.master.title("Raking Dtec")
         #self.master.minsize(width = 1000, height = 600)
@@ -134,14 +138,15 @@ class Tabela(Configurar):
         for i in range(1, self.a+1):
             COLUNAS.append('CHECK%d'%i)
         COLUNAS.append('FINAL')
-        self.df = pd.DataFrame(columns = COLUNAS, index = b)
         if col == True:
             return COLUNAS
         if lin == True:
             return b
+        self.df = pd.DataFrame(columns = COLUNAS, index = b)
         return self.df
         print(self.df)
-    def estruturaTabela(self, c, d):
+        
+    def estruturaTabela(self, df, col, lin, tempo):
         """
         Método responsável por montar a estrutura da tabela baseado no número de competidores registrados
         e número de checkpoints dispostos na pista
@@ -151,28 +156,25 @@ class Tabela(Configurar):
             text = "CLASSIFICAÇÃO",
             bg = "dark orange",
             font = self.fontCLASS)
-        self.txtClass.grid(row = 0, sticky = "nsew")
-        for i, j in zip(range(1, len(c)+1), c):
-            """
-            Laço que cria a linha das colunas 
-            """
-            self.frameTsub = tk.Frame(self.frameTema2, relief = tk.RAISED, borderwidth = 1)
-            self.frameTsub.grid(row = 0, column = i)
-            self.txtCheck = tk.Label (self.frameTsub, text = j, bg = "orange", font=self.fontStyle)
-            self.txtCheck.grid(row = 0, column = i)
-        for i, j in zip(d, range(len(d))):
-            """
-            Laço que cria a coluna das linhas 
-            """
-            self.frameOrd = tk.Frame(self.frameCorpo, relief = tk.RAISED, borderwidth = 1)
-            self.frameOrd.grid(row = j, column = 0, sticky = "nsew")
-            self.tx = tk.Label (self.frameOrd, text = i, bg = "pink", font=self.fontStyle)
-            self.tx.grid(row = j, column = 0, sticky = "nsew")      
-##    def criarTabela(self):
-##        pass
-##        """
-##        Nesse método será criada as linhas e colunas que conterão os registros de tempo dos competidores
-##        """
+        self.txtClass.pack()
+        t = 8
+        for m, n in zip (lin, range(len(lin))):
+            frameTsu = tk.Frame(self.frameTema2, relief = tk.RAISED)
+            frameTsu.grid(row = n+1, column = 0)
+            txtCheck = tk.Label (frameTsu, text = m, width = t, bg = "dark orange", font=self.fontStyle)
+            txtCheck.grid()
+            for i, j in zip (col, range(len(col))):           
+                frameTsub = tk.Frame(self.frameTema2, relief = tk.RAISED, borderwidth = 1)
+                frameTsub2 = tk.Frame(self.frameTema2, relief = tk.RAISED, borderwidth = 1)
+                tx = tk.Label (frameTsub2, text = i, width = t, bg = "dark orange", font=self.fontStyle)
+                txtCheck = tk.Label (frameTsub, text = '', width = t, bg = "pink", font=self.fontStyle)
+                frameTsub.grid(row = n+1, column = j+1)
+                frameTsub2.grid(row = 0, column = j+1)
+                tx.pack()
+                txtCheck.pack()
+                
+                
+
 ##    def registrarTempo(self):
 ##        pass
 ##        """
@@ -195,12 +197,10 @@ class Tabela(Configurar):
         """
         Os frames são usados para criar 'quadros' separados na tela, para melhor organizar a tabela
         """
-        self.frame1 = tk.Frame(self.master, relief = tk.RAISED) # Lado esquerdo da tela
-        self.frame2 = tk.Frame(self.master, relief = tk.RAISED) # Lado Direito da tela
-        self.frameTema = tk.Frame(self.frame1, relief = tk.RAISED, borderwidth = 1) # Texto 'CLASSIFICAÇÃO' no topo
-        self.frameTema2 = tk.Frame(self.frameTema, relief = tk.RAISED, borderwidth = 1) # 
-        self.frameCorpo = tk.Frame(self.frameTema, relief = tk.RAISED, borderwidth = 1) # 
-        self.frameValor = tk.Frame(self.frameCorpo, relief = tk.RAISED, borderwidth = 1) # 
+        self.frame1 = tk.Frame(self.master, relief = tk.RAISED, borderwidth = 1) # Lado esquerdo da tela
+        self.frame2 = tk.Frame(self.master, relief = tk.RAISED, borderwidth = 1) # Lado Direito da tela
+        self.frameTema = tk.Frame(self.frame1, relief = tk.RAISED) # Texto 'CLASSIFICAÇÃO' no topo
+        self.frameTema2 = tk.Frame(self.frame1, relief = tk.RAISED) # 
         self.frameFila = tk.Frame(self.frame2) # Frame que vai conter a fila de competidores
     def gradeTable(self):
         """
@@ -209,14 +209,12 @@ class Tabela(Configurar):
         self.frame1.grid(row = 0, column = 0)
         self.frame2.grid(row = 0, column = 1)
         self.frameTema.grid(row = 0, sticky = "nsew")
-        self.frameTema2.grid(row = 1)
-        self.frameCorpo.grid(row = 2)
-        self.frameValor.grid(row = 0, column = 1)
+        self.frameTema2.grid(row = 1, column = 0)
         self.frameFila.grid()
     def fila (self, a):
         for i, j in zip(a, range(len(a))):
             self.frameF = tk.Frame(self.frameFila, relief = tk.RAISED, borderwidth = 1)
-            self.fila = tk.Label(self.frameF, text = i, font=self.fontStyle)
+            self.fila = tk.Label(self.frameF, text = i, width = 10, font=self.fontStyle)
             self.frameF.grid(sticky = "nsew")
             self.fila.grid(row = j)
         """
