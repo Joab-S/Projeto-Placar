@@ -12,49 +12,56 @@ ________________________________________________________________________________
 |    ...    |    ...    |    ...    |    ...    |    ...    |  ...  |       ...       |
 |  EQP_Neqp |  CHECK 1  |  CHECK 2  |  CHECK 3  |  CHECK 4  |  ...  |  CHECK n_check  |
 """
-import tkinter as tk
-from tkinter import scrolledtext as sc
-import tkinter.font as tkFont
+try:
+    import tkinter as tk
+    from tkinter import scrolledtext as sc
+    import tkinter.font as tkFont
+except:
+    import Tkinter as tk
+    from Tkinter import scrolledtext as sc
+    import Tkinter.font as tkFont 
 import pandas as pd
+import random as rd
+import serial 
+
+ser = serial.Serial('COM4', 9600)
 
 class Configurar:
     def __init__ (self, master):
-        #fontStyle = tkFont.Font(family="Lucida Grande", size=20)
         self.master = master
         self.checks = tk.StringVar()
         self.eqps = []
-        self.tela()
-        self.clique = 0
+        self.res, self.clique = False, False
+        self.contClique = 0
     def iniciaTabela(self):
-        """
-        IMPLEMENTAR: colocar uma MessageBox caso inicie a tabela com informação faltante ou se um dos valores
-        numéricos não correspondam a números inteiros
-        """
-        if self.clique == 0:
-            self.tabela = tk.Toplevel(self.master)
-            self.app = Tabela(self.tabela)
-            self.app.framesTable()
-            a, b = int(self.checks.get()), self.eqps
-            dfr = self.app.criarDF(a, b)
-            self.app.fila(b)
-            c, d = self.app.criarDF(a, b, col = True), self.app.criarDF(a, b, lin = True)
-            self.app.estruturaTabela(dfr, c, d, 45)
-            self.app.gradeTable()
-            self.clique = 1
-    def tela(self):
+        self.tabela = tk.Toplevel(self.master)
+        self.checkpts, self.equipes, self.resultadoIniciar = int(self.checks.get()), self.eqps, self.res
+        self.app2 = Tabela(self.tabela, self.checkpts, self.equipes)
+        self.app2.telaTable()
+    def telaConf(self):
         # Método que reúne todos os outros da classe Configurar 
         self.frames_tela()
         self.master.title("Configurações")
-        self.master.geometry ("345x200")
         self.n_checkpoints()
         self.nomear_equipes()
         self.exibir_nomes()
         self.botoes()
+        self.controleArduino()
         self.gradeConf()
     def botoes(self):
         self.botao1 = tk.Button(self.frameB, text = "Iniciar Tabela", width = 20, command = self.iniciaTabela)
         self.botao2 = tk.Button(self.frameC, text = "Add", width = 7, command = self.add)
         self.botao3 = tk.Button(self.frameC, text = "Del", width = 7, command = self.delete)
+        self.botaoIniciarCorrida = tk.Button(self.frameMasterDireito, text = "Iniciar Corrida", width = 20, command = self.cliqueB)
+
+##
+##
+##
+## O BOTAO FUNCIONA COMO UM PUSHBUTTON SEM RETENÇÃO 
+##
+##        
+##
+        
     def nomear_equipes(self):
         """
         Cria caixa de entrada para receber o nome das equipes que serão registradas 
@@ -88,18 +95,24 @@ class Configurar:
         """
         del(self.eqps[-1])
         self.list_equipes.delete(tk.END)
+        
     def frames_tela(self):
         """
         Os frames são usados para criar 'quadros' separados na tela, para melhor organizar a tela
         """
-        self.frameA = tk.Frame(self.master)
-        self.frameB = tk.Frame(self.master)
+        self.frameMasterEsquerdo = tk.Frame(self.master)
+        self.frameMasterDireito = tk.Frame(self.master)
+        self.frameA = tk.Frame(self.frameMasterEsquerdo)
+        self.frameB = tk.Frame(self.frameMasterEsquerdo)
         self.frameC = tk.Frame(self.frameA)
         self.frameD = tk.Frame(self.frameA)
+        self.frameIniciaCorrida = tk.Frame(self.frameMasterDireito)
     def gradeConf(self):
         """
         Método onde é definida a posição de cada elemento visível na tela de configurações 
         """
+        self.frameMasterEsquerdo.grid(row = 0, column = 0)
+        self.frameMasterDireito.grid(row = 0, column = 1)
         self.frameA.grid(row = 0)
         self.frameB.grid(row = 1)
         self.frameC.grid(row = 0, column = 0)
@@ -112,121 +125,192 @@ class Configurar:
         self.txt_equipe.grid(row = 4, column = 0)
         self.nomes.grid(row = 5, column = 0)
         self.list_equipes.grid(row = 0, column = 0)
-        self.scroll.grid(row = 0, column = 1, sticky = "NS")    
+        self.scroll.grid(row = 0, column = 1, sticky = "NS")
+        self.TXT_INICIA_CORRIDA.grid(row = 0)
+        self.botaoIniciarCorrida.grid(row = 1)
+        self.cliques.grid(row = 2)
+
+    def controleArduino(self):
+        self.TXT_INICIA_CORRIDA = tk.Label (self.frameMasterDireito, text = 'Iniciar corrida?')
+        self.cliques = tk.Label(self.frameMasterDireito, text = self.contClique)
+        
+    def resultado(self):
+        self.res = True
+        if self.res == True:
+            self.contClique += 1
+            self.cliques['text'] = self.contClique
+            sim = ser.write(b'Sim')
+            self.app2.depoisDaOrdemArduino()#(self.res)
+
+    def cliqueB(self):
+        txt = str(ser.readline())[2:-3]
+        if txt == 'Iniciar corrida?':
+            print('res: ', self.res)
+            #self.clique = True
+            #if self.clique == True:
+            self.resultado()
+            print('res: ', self.res, 'clique: ', self.clique)
+            self.clique = False
+
+    def podeIniciar(self):
+        return self.res
 
 class Tabela(Configurar):
-    def __init__(self, master):
+    def __init__(self, master2, nCHECK, nEQP):
         self.fontStyle = tkFont.Font(family="Lucida Grande", size=15)
         self.fontCLASS = tkFont.Font(family="Lucida Grande", size=30)
-        self.master = master
-        super().__init__(master)
+        self.master2 = master2
+        self.n_checkpts, self.nome_equipes = nCHECK, nEQP
+        self.dfR = self.criarDF(self.n_checkpts, self.nome_equipes)
+        self.tempo, self.tempoMarcado = 0, 500
+        self.NOME_COLUNAS = self.dfR.columns
+        self.NOME_EQUIPES = self.dfR.index
+        super().__init__(master2)
+        self.iniciaCorrida = self.podeIniciar()
         
-    def tela(self):
-        self.master.title("Raking Dtec")
+    def telaTable(self):
+        self.master2.title("Raking Dtec")
+        self.framesTable()
+        self.estruturaTabela(self.dfR, self.NOME_COLUNAS, self.NOME_EQUIPES)
+        self.gradeTable()
+        self.master2.after(0, self.repete)
         #self.master.minsize(width = 1000, height = 600)
-        #self.estruturaTabela(a)
-        #self.criarTabela()
-        #self.registrarTempo()
-        #self.comparaTempo()
-        #self.mudarOrdem()
-    def criarDF(self, a = 0, b = 0, col = False, lin = False):
+        
+    def criarDF(self, check, equipes):
         """
         Cria um dataframe com a biblioteca pandas
         """
-        self.a, self.b = a, b
-        COLUNAS = ['INÍCIO']
-        for i in range(1, self.a+1):
-            COLUNAS.append('CHECK%d'%i)
-        COLUNAS.append('FINAL')
-        if col == True:
-            return COLUNAS
-        if lin == True:
-            return b
-        self.df = pd.DataFrame(columns = COLUNAS, index = b)
-        return self.df
-        print(self.df)
+        COLUNAS = []
+        for i in range(1, check+1):
+            COLUNAS.append('Check %d'%i)
+        COLUNAS.append('Final  ')
+        df = pd.DataFrame(columns = COLUNAS, index = equipes)
+    
+        return df
+
+    def colunas_equipes(self, df):
+        self.NOME_COLUNAS = df.columns
+        self.NOME_EQUIPES = df.index
         
-    def estruturaTabela(self, df, col, lin, tempo):
+    def estruturaTabela(self, df, col, lin):
         """
         Método responsável por montar a estrutura da tabela baseado no número de competidores registrados
         e número de checkpoints dispostos na pista
         """
+        t = 8
         self.txtClass = tk.Label (
             self.frameTema,
             text = "CLASSIFICAÇÃO",
             bg = "dark orange",
-            font = self.fontCLASS)
+        font = self.fontCLASS)
         self.txtClass.pack()
-        t = 8
+        self.listEQP, self.listPONTOS = [], []
         for m, n in zip (lin, range(len(lin))):
-            frameTsu = tk.Frame(self.frameTema2, relief = tk.RAISED)
+            frameTsu = tk.Frame(self.frameTema2, relief = tk.RAISED, borderwidth = 1)
             frameTsu.grid(row = n+1, column = 0)
-            txtCheck = tk.Label (frameTsu, text = m, width = t, bg = "dark orange", font=self.fontStyle)
-            txtCheck.grid()
-            for i, j in zip (col, range(len(col))):           
+            self.txtEQP = tk.Label (frameTsu, text = '', width = t, bg = "dark orange", font=self.fontStyle)
+            self.txtEQP.pack()
+            self.listEQP.append(self.txtEQP)
+            for i, j in zip (col, range(len(col))):
                 frameTsub = tk.Frame(self.frameTema2, relief = tk.RAISED, borderwidth = 1)
                 frameTsub2 = tk.Frame(self.frameTema2, relief = tk.RAISED, borderwidth = 1)
                 tx = tk.Label (frameTsub2, text = i, width = t, bg = "dark orange", font=self.fontStyle)
-                txtCheck = tk.Label (frameTsub, text = '', width = t, bg = "pink", font=self.fontStyle)
+                self.txtCheck = tk.Label (frameTsub, text = '', width = t, bg = "pink", font=self.fontStyle)
                 frameTsub.grid(row = n+1, column = j+1)
                 frameTsub2.grid(row = 0, column = j+1)
                 tx.pack()
-                txtCheck.pack()
-                
-                
+                self.listPONTOS.append(self.txtCheck)
+                self.txtCheck.pack()
 
-##    def registrarTempo(self):
-##        pass
-##        """
-##        Aqui, os registros de tempo recebidos do Arduino/Raspberry de cada checkpoint serão colocados na tabela completando
-##        a linha referente ao carro que está correndo na vez. 
-##        """
-##    def comparaTempo(self):
-##        pass
-##        """
-##        A cada checkpoint, ou seja, a cada registro de tempo, o método comparaTempo é usado para comparar o valor do checkpoint
-##        atual da equipe na pista com os valores de tempo no mesmo checkpoint dos outros competidores.
-##        """
-##    def mudarOrdem(self):
-##        pass
-##        """
-##        Depois de comparar o tempo e dizer quem é menor ou maior pra determinado checkpoint, o método mudarOrdem muda a ordem
-##        no placar, alterando as posições no ranking de acordo com o menor tempo.
-##        """
+    def registrarRodada(self, df, check, equipe, tempo):
+        df.loc[equipe, check] = tempo
+        df.sort_values(check)
+
+    def atualizarTabela(self, df, col, lin):
+        cont = 0
+        for m, n in zip (lin, range(len(lin))):
+            self.listEQP[n]['text'] = m
+            for i, j in zip (col, range(len(col))):
+                self.listPONTOS[cont]['text'] = df.loc[m, i]
+                cont += 1
+
+    def chegadaTempo(self):
+        """o tempo vem do arduino com o formato CHECK01 tempo, usa split() e separa entre check1 e tempo"""
+        registro = str(ser.readline()).split("->")
+        self.tempo = registro[1][0:-5]
+        self.marcador = registro[0][2:9]
+
     def framesTable(self):
-        """
-        Os frames são usados para criar 'quadros' separados na tela, para melhor organizar a tabela
-        """
-        self.frame1 = tk.Frame(self.master, relief = tk.RAISED, borderwidth = 1) # Lado esquerdo da tela
-        self.frame2 = tk.Frame(self.master, relief = tk.RAISED, borderwidth = 1) # Lado Direito da tela
-        self.frameTema = tk.Frame(self.frame1, relief = tk.RAISED) # Texto 'CLASSIFICAÇÃO' no topo
+        """Os frames são usados para criar 'quadros' separados na tela, para melhor organizar a tabela"""
+        self.frame1 = tk.Frame(self.master2, relief = tk.RAISED, bg = "dark orange", borderwidth = 1) # Lado esquerdo da tela
+        self.frame2 = tk.Frame(self.master2, relief = tk.RAISED, bg = "dark orange", borderwidth = 1) # Lado Direito da tela
+        self.frameTema = tk.Frame(self.frame1) # Texto 'CLASSIFICAÇÃO' no topo
         self.frameTema2 = tk.Frame(self.frame1, relief = tk.RAISED) # 
         self.frameFila = tk.Frame(self.frame2) # Frame que vai conter a fila de competidores
+
     def gradeTable(self):
         """
         
         """
         self.frame1.grid(row = 0, column = 0)
         self.frame2.grid(row = 0, column = 1)
-        self.frameTema.grid(row = 0, sticky = "nsew")
+        self.frameTema.grid(row = 0)
         self.frameTema2.grid(row = 1, column = 0)
         self.frameFila.grid()
-    def fila (self, a):
-        for i, j in zip(a, range(len(a))):
+
+    def ImprimeFila(self, listaComp, primeiro = 0):
+        for i, j in zip(listaComp, range(len(listaComp))):
             self.frameF = tk.Frame(self.frameFila, relief = tk.RAISED, borderwidth = 1)
             self.fila = tk.Label(self.frameF, text = i, width = 10, font=self.fontStyle)
             self.frameF.grid(sticky = "nsew")
             self.fila.grid(row = j)
-        """
-        Aqui haverá uma coluna cujas linhas apresentam, na ordem exibida, o nome do competidor atual, seguido
-        pelo nome das próximas equipes a competir, tal qual uma fila.
-        """
 
+    def ordem (self, listaComp):
+        return 'e2'#listaComp[1]
+
+    def reiniciarContagem(self):
+        while ser.readline() != b'START\r\n':
+            ser.readline()
+
+    def depoisDaOrdemArduino(self):#, pode = False):
+        #while pode == True:
+            if ser.readline() == b'\r\r\n':
+                if ser.readline() == b'Sim\r\n':
+                    if ser.readline() == b'Esperando o carrinho.\r\n':
+                        if ser.readline() == b'START\r\n':
+
+                            n = 0
+                            for n in range(len(self.NOME_COLUNAS)):#while n < len(self.NOME_COLUNAS):
+                                self.chegadaTempo()
+                                self.tempoMarcado = self.tempo
+                                posicaoCH = self.marcador
+                                corredorAtual = self.ordem(self.NOME_EQUIPES)
+                                self.registrarRodada(self.dfR, posicaoCH, corredorAtual, self.tempoMarcado)
+                                print(self.nome_equipes)
+                                print(self.dfR)
+                                dfrOrg = self.dfR.sort_values(posicaoCH)
+                                self.colunas_equipes(dfrOrg)
+                                print(self.NOME_EQUIPES)
+                                print(dfrOrg)
+                                self.atualizarTabela(dfrOrg, self.NOME_COLUNAS, self.NOME_EQUIPES)
+            if ser.readline() == b'Final de percurso!\r\n':
+                if str(ser.readline())[2:13] == 'Tempo final':
+                    self.res = False
+                    pode = False
+
+    def repete(self):
+        print('BBBBBBBBBB: res --->', self.res)
+        self.master2.after(self.tempoMarcado, self.repete)
 
 def main():
     root = tk.Tk()
     app = Configurar(root)
-    root.mainloop()
+    app.telaConf()
+    while True:
+        root.update_idletasks()
+        root.update()
+    #root.mainloop()
+    
     
 if __name__ == '__main__':
     main()
