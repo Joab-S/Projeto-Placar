@@ -57,6 +57,14 @@ class Configurar:
         self.botao2 = tk.Button(self.frameC, text = "Add", width = 7, command = self.add)
         self.botao3 = tk.Button(self.frameC, text = "Del", width = 7, command = self.delete)
         self.botaoIniciarCorrida = tk.Button(self.frameMasterDireito, text = "Iniciar Corrida", width = 20, command = self.cliqueB)
+
+##
+##
+##
+## O BOTAO FUNCIONA COMO UM PUSHBUTTON SEM RETENÇÃO 
+##
+##        
+##
         
     def nomear_equipes(self):
         """
@@ -266,7 +274,7 @@ class Tabela(Configurar):
         self.frame2 = tk.Frame(self.master2, relief = tk.RAISED, bg = "dark orange", borderwidth = 1) # Lado Direito da tela
         self.frameTema = tk.Frame(self.frame1) # Texto 'CLASSIFICAÇÃO' no topo
         self.frameTema2 = tk.Frame(self.frame1, relief = tk.RAISED) # 
-        self.frameFila = tk.Frame(self.frame2) # Frame que vai conter a fila de competidores
+        #self.frameFila = tk.Frame(self.frame2) # Frame que vai conter a fila de competidores
 
     def gradeTable(self):
         """
@@ -276,7 +284,7 @@ class Tabela(Configurar):
         self.frame2.grid(row = 0, column = 1)
         self.frameTema.grid(row = 0)
         self.frameTema2.grid(row = 1, column = 0)
-        self.frameFila.grid() 
+        #self.frameFila.grid() 
  
     def competidorAtual (self, primeiro, i):
         i+=1
