@@ -22,10 +22,14 @@ except:
     import Tkinter.font as tkFont 
 import pandas as pd
 import random as rd
-import serial 
+import serial
+import threading
+import time
 
-ser = serial.Serial('COM4', 9600)
-
+ser = serial.Serial('COM17', 9600)
+#ser = serial.Serial('/dev/rfcomm0', 9600)
+root = tk.Tk()
+            
 class Configurar:
     def __init__ (self, master):
         self.master = master
@@ -53,14 +57,6 @@ class Configurar:
         self.botao2 = tk.Button(self.frameC, text = "Add", width = 7, command = self.add)
         self.botao3 = tk.Button(self.frameC, text = "Del", width = 7, command = self.delete)
         self.botaoIniciarCorrida = tk.Button(self.frameMasterDireito, text = "Iniciar Corrida", width = 20, command = self.cliqueB)
-
-##
-##
-##
-## O BOTAO FUNCIONA COMO UM PUSHBUTTON SEM RETENÇÃO 
-##
-##        
-##
         
     def nomear_equipes(self):
         """
@@ -185,10 +181,18 @@ class Tabela(Configurar):
             COLUNAS.append('Check %d'%i)
         COLUNAS.append('Final  ')
         df = pd.DataFrame(columns = COLUNAS, index = equipes)
-    
+
+        for m in (df.index):
+            for n in (df.columns):
+                df.loc[m, n] = ''
+                
         return df
 
     def colunas_equipes(self, df):
+        """
+        Retorna duas listas que mudam de acordo com a columns e index
+        do dataframe, contendo o nome das colunas e o nome das linhas 
+        """
         self.NOME_COLUNAS = df.columns
         self.NOME_EQUIPES = df.index
         
@@ -223,9 +227,25 @@ class Tabela(Configurar):
                 self.txtCheck.pack()
 
     def registrarRodada(self, df, check, equipe, tempo):
+        """
+        Registra o valor do tempo dentro da celula do dataframe referente ao
+        nome da linha e coluna responsável
+        """
         df.loc[equipe, check] = tempo
         df.sort_values(check)
 
+    def ordenarDataframe(self, df, coluna):
+        """
+        Ordena o dataframe por ordem crescente
+        """
+        dfrOrganizado = df.sort_values(coluna)
+
+        #
+        # Colocar string vazia em baixo e número no topo 
+        #
+        
+        return dfrOrganizado
+    
     def atualizarTabela(self, df, col, lin):
         cont = 0
         for m, n in zip (lin, range(len(lin))):
@@ -256,18 +276,12 @@ class Tabela(Configurar):
         self.frame2.grid(row = 0, column = 1)
         self.frameTema.grid(row = 0)
         self.frameTema2.grid(row = 1, column = 0)
-        self.frameFila.grid()
-
-    def ImprimeFila(self, listaComp, primeiro = 0):
-        for i, j in zip(listaComp, range(len(listaComp))):
-            self.frameF = tk.Frame(self.frameFila, relief = tk.RAISED, borderwidth = 1)
-            self.fila = tk.Label(self.frameF, text = i, width = 10, font=self.fontStyle)
-            self.frameF.grid(sticky = "nsew")
-            self.fila.grid(row = j)
-
-    def ordem (self, listaComp):
-        return 'e2'#listaComp[1]
-
+        self.frameFila.grid() 
+ 
+    def competidorAtual (self, primeiro, i):
+        i+=1
+        return primeiro[i]
+    
     def reiniciarContagem(self):
         while ser.readline() != b'START\r\n':
             ser.readline()
@@ -275,35 +289,41 @@ class Tabela(Configurar):
     def depoisDaOrdemArduino(self):#, pode = False):
         #while pode == True:
             if ser.readline() == b'\r\r\n':
+                print('')
                 if ser.readline() == b'Sim\r\n':
+                    print('Sim')
                     if ser.readline() == b'Esperando o carrinho.\r\n':
+                        print('Esperando o carrinho.')
                         if ser.readline() == b'START\r\n':
-
-                            n = 0
+                            print('START')
+                            n, i = 0, -1
                             for n in range(len(self.NOME_COLUNAS)):#while n < len(self.NOME_COLUNAS):
                                 self.chegadaTempo()
                                 self.tempoMarcado = self.tempo
                                 posicaoCH = self.marcador
-                                corredorAtual = self.ordem(self.NOME_EQUIPES)
+                                corredorAtual = self.competidorAtual(self.nome_equipes, i)
                                 self.registrarRodada(self.dfR, posicaoCH, corredorAtual, self.tempoMarcado)
-                                print(self.nome_equipes)
-                                print(self.dfR)
-                                dfrOrg = self.dfR.sort_values(posicaoCH)
+                                #print(self.nome_equipes)
+                                #print(self.dfR)
+                                dfrOrg = self.ordenarDataframe(self.dfR, posicaoCH)
                                 self.colunas_equipes(dfrOrg)
-                                print(self.NOME_EQUIPES)
+                                #print(self.NOME_EQUIPES)
                                 print(dfrOrg)
                                 self.atualizarTabela(dfrOrg, self.NOME_COLUNAS, self.NOME_EQUIPES)
+                                root.update()
             if ser.readline() == b'Final de percurso!\r\n':
+                print('Final de percurso!')
                 if str(ser.readline())[2:13] == 'Tempo final':
+                    print('Tempo final')
                     self.res = False
                     pode = False
 
     def repete(self):
-        print('BBBBBBBBBB: res --->', self.res)
+        print('AGUARDANDO...')
         self.master2.after(self.tempoMarcado, self.repete)
 
 def main():
-    root = tk.Tk()
+
     app = Configurar(root)
     app.telaConf()
     while True:
