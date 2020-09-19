@@ -26,8 +26,8 @@ import serial
 import threading
 import time
 
-ser = serial.Serial('COM17', 9600)
-#ser = serial.Serial('/dev/rfcomm0', 9600)
+#ser = serial.Serial('COM17', 9600)
+ser = serial.Serial('/dev/rfcomm0', 9600)
 root = tk.Tk()
             
 class Configurar:
@@ -36,7 +36,7 @@ class Configurar:
         self.checks = tk.StringVar()
         self.eqps = []
         self.res, self.clique = False, False
-        self.contClique = 0
+        self.contClique, self.posicao = 0, -1
     def iniciaTabela(self):
         self.tabela = tk.Toplevel(self.master)
         self.checkpts, self.equipes, self.resultadoIniciar = int(self.checks.get()), self.eqps, self.res
@@ -57,15 +57,7 @@ class Configurar:
         self.botao2 = tk.Button(self.frameC, text = "Add", width = 7, command = self.add)
         self.botao3 = tk.Button(self.frameC, text = "Del", width = 7, command = self.delete)
         self.botaoIniciarCorrida = tk.Button(self.frameMasterDireito, text = "Iniciar Corrida", width = 20, command = self.cliqueB)
-
-##
-##
-##
-## O BOTAO FUNCIONA COMO UM PUSHBUTTON SEM RETENÇÃO 
-##
-##        
-##
-        
+   
     def nomear_equipes(self):
         """
         Cria caixa de entrada para receber o nome das equipes que serão registradas 
@@ -142,16 +134,15 @@ class Configurar:
         self.res = True
         if self.res == True:
             self.contClique += 1
+            self.posicao += 1
             self.cliques['text'] = self.contClique
             sim = ser.write(b'Sim')
-            self.app2.depoisDaOrdemArduino()#(self.res)
+            self.app2.depoisDaOrdemArduino(self.posicao)
 
     def cliqueB(self):
         txt = str(ser.readline())[2:-3]
         if txt == 'Iniciar corrida?':
             print('res: ', self.res)
-            #self.clique = True
-            #if self.clique == True:
             self.resultado()
             print('res: ', self.res, 'clique: ', self.clique)
             self.clique = False
@@ -287,15 +278,14 @@ class Tabela(Configurar):
         #self.frameFila.grid() 
  
     def competidorAtual (self, primeiro, i):
-        i+=1
         return primeiro[i]
     
     def reiniciarContagem(self):
         while ser.readline() != b'START\r\n':
             ser.readline()
 
-    def depoisDaOrdemArduino(self):#, pode = False):
-        #while pode == True:
+    def depoisDaOrdemArduino(self, numeroPosicao):
+            self.numPos = numeroPosicao
             if ser.readline() == b'\r\r\n':
                 print('')
                 if ser.readline() == b'Sim\r\n':
@@ -304,12 +294,12 @@ class Tabela(Configurar):
                         print('Esperando o carrinho.')
                         if ser.readline() == b'START\r\n':
                             print('START')
-                            n, i = 0, -1
+                            n = 0
                             for n in range(len(self.NOME_COLUNAS)):#while n < len(self.NOME_COLUNAS):
                                 self.chegadaTempo()
                                 self.tempoMarcado = self.tempo
                                 posicaoCH = self.marcador
-                                corredorAtual = self.competidorAtual(self.nome_equipes, i)
+                                corredorAtual = self.competidorAtual(self.nome_equipes, self.numPos)
                                 self.registrarRodada(self.dfR, posicaoCH, corredorAtual, self.tempoMarcado)
                                 #print(self.nome_equipes)
                                 #print(self.dfR)
@@ -327,7 +317,7 @@ class Tabela(Configurar):
                     pode = False
 
     def repete(self):
-        print('AGUARDANDO...')
+        #print('AGUARDANDO...')
         self.master2.after(self.tempoMarcado, self.repete)
 
 def main():
