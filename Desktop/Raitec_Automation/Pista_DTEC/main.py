@@ -1,6 +1,8 @@
 """
 * Código para criação da Tabela de Ranking e regitro de tempo da competição Line Follower
 * RAITec / DTec
+* Feito por: Joab Silva (Joab-S)
+
 ------------------------------ IDEIA GERAL DA TABELA FINAL ---------------------------
 ______________________________________________________________________________________
 |                                     CLASSIFICAÇÃO                                   |
@@ -179,11 +181,7 @@ class Tabela(Configurar):
         for i in range(1, check+1):
             COLUNAS.append('Check %d'%i)
         COLUNAS.append('Final  ')
-        df = pd.DataFrame(columns = COLUNAS, index = equipes)
-
-        for m in (df.index):
-            for n in (df.columns):
-                df.loc[m, n] = ''
+        df = pd.DataFrame(columns = COLUNAS, index = equipes)'
                 
         return df
 
@@ -238,10 +236,11 @@ class Tabela(Configurar):
         Ordena o dataframe por ordem crescente
         """
         dfrOrganizado = df.sort_values(coluna)
-
-        #
-        # Colocar string vazia em baixo e número no topo 
-        #
+        
+        for m in (dfrOrganizado.index):
+            for n in (dfrOrganizado.columns):
+                if type(dfrOrganizado.loc[m, n]) == float:
+                    dfrOrganizado.loc[m, n] = ''
         
         return dfrOrganizado
     
@@ -301,12 +300,9 @@ class Tabela(Configurar):
                                 posicaoCH = self.marcador
                                 corredorAtual = self.competidorAtual(self.nome_equipes, self.numPos)
                                 self.registrarRodada(self.dfR, posicaoCH, corredorAtual, self.tempoMarcado)
-                                #print(self.nome_equipes)
-                                #print(self.dfR)
                                 dfrOrg = self.ordenarDataframe(self.dfR, posicaoCH)
                                 self.colunas_equipes(dfrOrg)
-                                #print(self.NOME_EQUIPES)
-                                print(dfrOrg)
+                                #print(dfrOrg)
                                 self.atualizarTabela(dfrOrg, self.NOME_COLUNAS, self.NOME_EQUIPES)
                                 root.update()
             if ser.readline() == b'Final de percurso!\r\n':
