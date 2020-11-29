@@ -28,8 +28,8 @@ import serial
 import threading
 import time
 
-#ser = serial.Serial('COM17', 9600)
-ser = serial.Serial('/dev/rfcomm0', 9600)
+ser = serial.Serial('COM17', 9600)
+#ser = serial.Serial('/dev/rfcomm0', 9600)
 root = tk.Tk()
             
 class Configurar:
@@ -181,7 +181,6 @@ class Tabela(Configurar):
         for i in range(1, check+1):
             COLUNAS.append('Check %d'%i)
         COLUNAS.append('Final  ')
-        COLUNAS.append('Total  ')
         df = pd.DataFrame(columns = COLUNAS, index = equipes)
                 
         return df
@@ -280,9 +279,9 @@ class Tabela(Configurar):
     def competidorAtual (self, primeiro, i):
         return primeiro[i]
     
-    def reiniciarContagem(self):
-        while ser.readline() != b'START\r\n':
-            ser.readline()
+##    def reiniciarContagem(self):
+##        while ser.readline() != b'START\r\n':
+##            ser.readline()
 
     def depoisDaOrdemArduino(self, numeroPosicao):
             self.numPos = numeroPosicao
@@ -306,10 +305,10 @@ class Tabela(Configurar):
                                 #print(dfrOrg)
                                 self.atualizarTabela(dfrOrg, self.NOME_COLUNAS, self.NOME_EQUIPES)
                                 root.update()
-            # if ser.readline() == b'Final de percurso!\r\n':
-            #    print('Final de percurso!')
-            #    if str(ser.readline())[2:13] == 'Tempo final':
-            #        print('Tempo final')
+##            if ser.readline() == b'Final de percurso!\r\n':
+##                print('Final de percurso!')
+##                if str(ser.readline())[2:13] == 'Tempo final':
+##                    print('Tempo final')
                     self.res = False
                     pode = False
 
