@@ -182,7 +182,7 @@ class Tabela(Configurar):
             COLUNAS.append('Check %d'%i)
         COLUNAS.append('Final  ')
         COLUNAS.append('Total  ')
-        df = pd.DataFrame(columns = COLUNAS, index = equipes)'
+        df = pd.DataFrame(columns = COLUNAS, index = equipes)
                 
         return df
 
