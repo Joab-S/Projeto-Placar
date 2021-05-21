@@ -1,0 +1,83 @@
+*{
+    margin: 0;
+    padding: 0;
+
+}
+body {
+    background-color: rgb(121, 101, 12);
+    background-image: linear-gradient(to top, rgb(2,3,7),rgb(255, 165, 0));
+    background-image: -moz-linear-gradient(to bottom, rgb(2,3,7),rgb(7,26,78));
+    background-image: -webkit-linear-gradient(to bottom, rgb(2,3,7),rgb(7,26,78));
+    min-height: 580px;
+    font-family: Arial, Helvetica, sans-serif;
+
+}
+section {
+    float: none;
+    width: 500px;
+    margin: 100px auto;
+    color: rgb(255,255,255);
+
+}
+section h1{
+    float: left;
+    width: 100%;
+    height: auto;
+    margin: 0 0 10px 0;
+    padding: 0;
+    color: rgb(255,255,255);
+    font-size: 37px;
+    text-align: center;
+}
+section table{
+    float: left;
+    width: 100%;
+    height: auto;
+    margin: 0 0 100px 0;
+    padding: 0;
+    border: 2px solid rgb(255,255,255);
+    border-spacing: 0;
+    border-collapse: collapse;
+    background-color: rgb(210,210,210);
+    box-shadow: 0 0 30px 5px rgb(0,0,0);
+}
+section table thead{
+    background-color: rgb(34,34,34);
+}
+section table thead tr th{
+    color: rgb(255,255,255);
+    padding: 7px 5px;
+    text-align: center;
+    font-size: 22px;
+    border: 0 solid rgb(0,0,0);
+    border-bottom-width: 1px;
+    border-right-width: 1px;
+}
+section table thead tr th :last-child{
+    border-right-width: 0px;
+}
+sectiontable tbody{
+    background-color: rgb(220, 220, 220);
+
+}
+section table tbody tr td{
+    padding: 10px 5px;
+    border: 0 solid rgb(255,255,255);
+    border-bottom-width:1px;
+    border-right-width:1px;
+    color: rgb(19, 19, 19);
+    text-align: center;
+    font-size: 19px;
+}
+section table tbody tr.listrado{
+    background-color: rgba(0,0,0,0.1);
+}
+section table tfoot{
+    color: rgb(255, 255, 255);
+    background-color: rgb(0,0,0);
+}
+section table tfoot tr td{
+    font-size: 30px;
+    text-align: center;
+    padding: 10px 0px;
+}

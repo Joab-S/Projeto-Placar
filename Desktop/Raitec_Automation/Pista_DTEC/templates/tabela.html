@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Classificação</title>
+    <meta http-equiv="refresh" content=1 url=http://127.0.0.1:5000>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/static/tabela01.css">
+</head>
+<body>
+    <section>
+        <h1>Classificação</h1>
+        <table id="tabela">
+            <thead>
+                <tr>
+                    <th>  </th>  
+                  {% for header in headings %}
+                  <th> {{ header }} </th>
+                  {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                <tr> 
+                    {% for cell in row %}
+                    <td> {{ cell }} </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+               
+                
+            </tbody>
+            <!--tfoot>
+                <tr>
+                    <td colspan="3">Rodapé</td>
+                </tr-->
+            </tfoot>
+        </table>
+    </section>    
+</body>
+</html>
